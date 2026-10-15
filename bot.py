@@ -92,8 +92,11 @@ def send_whatsapp(message, test=False):
     fields = {'From': required('WHATSAPP_FROM'), 'To': required('WHATSAPP_TO')}
     content_sid = os.environ.get('TWILIO_CONTENT_SID', '').strip()
     if content_sid:
-        # Approved template must have a single variable {{1}} for this text.
-        fields.update(ContentSid=content_sid, ContentVariables=json.dumps({'1': message}))
+        fields['ContentSid'] = content_sid
+        # The console's test template has no variables. Live alerts require
+        # a separate approved template with one variable for the alert text.
+        if not test:
+            fields['ContentVariables'] = json.dumps({'1': message})
     elif test and os.environ.get('WHATSAPP_TEST_SESSION_OPEN') == 'true':
         fields['Body'] = message
     else:

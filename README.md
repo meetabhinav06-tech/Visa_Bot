@@ -50,6 +50,13 @@ Keep account credentials in GitHub Secrets; do not paste them into chat or commi
 
 ## 3. Test WhatsApp
 
+Configured console trial template: the test mode sends the selected template
+without ContentVariables. Its appointment wording is sample text, not actual
+VFS availability. A queued response means acceptance, not confirmed delivery.
+When TWILIO_CONTENT_SID is set, test mode expects a no-variable template;
+live mode expects a separate approved template with one variable for the alert.
+Replace the trial Content SID with that production template before enabling live.
+
 Follow https://www.twilio.com/docs/whatsapp/quickstart to create your account,
 activate its WhatsApp trial/Sandbox, and join it from your own WhatsApp phone.
 Use the actual sender shown in your Twilio console.
