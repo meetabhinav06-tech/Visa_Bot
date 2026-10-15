@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 import os
-from bot import send_email, required
+from bot import send_email, send_whatsapp, required
 from probe_parse import URL
 
 COUNTRIES = {'AT':'Austria','BE':'Belgium','BG':'Bulgaria','HR':'Croatia',
@@ -30,6 +30,8 @@ def leads(data, today=None):
         if code not in COUNTRIES or entry.get('visa_category') != 'TOURIST':
             continue
         count = entry.get('applicant_count')
+        if type(count) is not int or count != 1:
+            continue
         for centre in entry.get('centres', []):
             if centre.get('centre_id') not in {'london','manchester','edinburgh'}:
                 continue
@@ -60,19 +62,16 @@ def main():
     fresh = []
     keys = []
     for row in rows:
-        key = hashlib.sha256(json.dumps(row, sort_keys=True).encode()).hexdigest()
+        key = 'one-applicant:' + hashlib.sha256(json.dumps(row, sort_keys=True).encode()).hexdigest()
         if key not in state:
             keys.append(key)
             fresh.append(row)
     print(json.dumps({'matching_leads':len(rows), 'new_leads':len(fresh), 'results':rows}, indent=2))
-    if not fresh:
-        print('No new third-party leads; no email sent.')
-        return
     checked = datetime.now(timezone.utc).isoformat()
     lines = ['LIVE THIRD-PARTY SCHENGEN AVAILABILITY LEADS',
              'Queried at ' + checked + ' (request time, not source observation time).',
              '', 'These are provider-reported earliest dates, not confirmed appointments.',
-             'Your requirement is 2 applicants. A reported count of 1 does NOT meet it.',
+             'Filter: 1 applicant, tourist visa, London / Manchester / Edinburgh.',
              'Verify dates, category and capacity on the official booking portal.', '',
              'Country | UK centre | Earliest date | Reported applicants']
     for row in fresh:
@@ -82,14 +81,42 @@ def main():
               'No booking has been made. Missing destinations do not prove no slots exist.',
               'Check every four hours; unchanged leads are suppressed.',
               'WhatsApp live messages are disabled until a suitable template is configured.']
-    send_email('\n'.join(lines), subject='Schengen live feed: dates to verify (2 applicants unconfirmed)')
-    for key in keys:
-        state[key] = checked
-    STATE.parent.mkdir(parents=True, exist_ok=True)
-    temp = STATE.with_suffix('.tmp')
-    temp.write_text(json.dumps(state, indent=2))
-    temp.replace(STATE)
-    print('Live lead email accepted by SMTP. Final delivery not confirmed.')
+    def save():
+        STATE.parent.mkdir(parents=True, exist_ok=True)
+        temp = STATE.with_suffix('.tmp')
+        temp.write_text(json.dumps(state, indent=2))
+        temp.replace(STATE)
+    if fresh:
+        send_email('\n'.join(lines), subject='Schengen live feed: 1 applicant - dates to verify')
+        for key in keys:
+            state[key] = checked
+        save()
+        print('Live lead email accepted by SMTP. Final delivery not confirmed.')
+    else:
+        print('No new email leads.')
+    template = os.environ.get('WHATSAPP_LIVE_CONTENT_SID', '').strip()
+    if not template:
+        print('WhatsApp pending: approved dynamic alert template required.')
+        return
+    pending = []
+    receipts = []
+    for row in rows:
+        key = 'whatsapp-one:' + hashlib.sha256(json.dumps(row, sort_keys=True).encode()).hexdigest()
+        if key not in state:
+            pending.append(row)
+            receipts.append(key)
+    if pending:
+        # Separate template secret prevents reuse of the fixed trial reminder.
+        os.environ['TWILIO_CONTENT_SID'] = template
+        message = '1 applicant; third-party leads, verify manually. '
+        message += '; '.join(r['country'] + ', ' + r['centre'] + ', ' + r['date'] for r in pending[:5])
+        if len(pending) > 5:
+            message += '; plus ' + str(len(pending) - 5) + ' more in email.'
+        send_whatsapp(message)
+        for key in receipts:
+            state[key] = checked
+        save()
+        print('Live WhatsApp accepted by Twilio. Final delivery not confirmed.')
 
 if __name__ == '__main__':
     try:
