@@ -31,6 +31,11 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          WHATSAPP_LIVE_CONTENT_SID: ${{ secrets.WHATSAPP_LIVE_CONTENT_SID }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          WHATSAPP_FROM: ${{ secrets.WHATSAPP_FROM }}
+          WHATSAPP_TO: ${{ secrets.WHATSAPP_TO }}
         run: python live_schengen.py
       - uses: actions/cache/save@v6
         if: always() && hashFiles('schengen-state/sent.json') != ''
