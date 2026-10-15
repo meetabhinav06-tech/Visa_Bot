@@ -11,6 +11,7 @@ import smtplib
 import ssl
 import sys
 from urllib.parse import urlencode, urlsplit
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen, build_opener, HTTPRedirectHandler
 
 CENTRES = {'London', 'Manchester', 'Edinburgh'}
@@ -163,6 +164,18 @@ def main():
 if __name__ == '__main__':
     try:
         main()
+    except HTTPError as error:
+        # Numeric diagnostics only: provider bodies can contain personal data.
+        provider_code = None
+        try:
+            body = json.loads(error.read(65536))
+            if type(body.get('code')) is int:
+                provider_code = body['code']
+        except Exception:
+            pass
+        print('Provider request rejected: HTTP ' + str(error.code)
+              + ', provider code ' + str(provider_code), file=sys.stderr)
+        sys.exit(1)
     except Exception as error:
         # Never print exception bodies, which may contain credentials or feed URLs.
         print('Run failed (' + type(error).__name__ + '). Check README and provider logs.', file=sys.stderr)
