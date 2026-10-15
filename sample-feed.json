@@ -1,0 +1,12 @@
+{
+  "simulated": true,
+  "country_from": "GBR",
+  "destination": "AUT",
+  "category": "tourist-schengen-c",
+  "checked_at": "2026-10-15T12:00:00Z",
+  "slots": [
+    {"centre": "London", "starts_at": "2026-10-28T09:00:00+00:00", "capacity": 2},
+    {"centre": "Manchester", "starts_at": "2026-10-28T10:00:00+00:00", "capacity": 1},
+    {"centre": "Edinburgh", "starts_at": "2026-10-29T09:00:00+00:00", "capacity": 2}
+  ]
+}
