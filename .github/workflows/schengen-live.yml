@@ -1,0 +1,39 @@
+name: Schengen live email leads
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 */4 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: schengen-live-leads
+  cancel-in-progress: false
+jobs:
+  monitor:
+    if: vars.LIVE_SCHENGEN_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: python -m unittest -q
+      - uses: actions/cache/restore@v6
+        with:
+          path: schengen-state
+          key: schengen-live-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: schengen-live-
+      - name: Fetch live leads and email new results
+        env:
+          LIVE_SCHENGEN_ENABLED: ${{ vars.LIVE_SCHENGEN_ENABLED }}
+          PARSE_API_KEY: ${{ secrets.PARSE_API_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python live_schengen.py
+      - uses: actions/cache/save@v6
+        if: always() && hashFiles('schengen-state/sent.json') != ''
+        with:
+          path: schengen-state
+          key: schengen-live-${{ github.run_id }}-${{ github.run_attempt }}
