@@ -6,7 +6,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 URL = ('https://api.parse.bot/scraper/1191f0c3-adff-47d9-abe0-a8155da12958/'
-       'list_slots?residence=GB&destination=AT')
+       'list_slots?residence=GB')
 
 def main():
     key = os.environ.get('PARSE_API_KEY', '').strip()
@@ -19,14 +19,13 @@ def main():
         raise ValueError('Unexpectedly large response')
     payload = json.loads(raw)
     data = payload.get('data', payload)
-    if data.get('residence') != 'GB' or data.get('destination_filter') != 'AT':
-        raise ValueError('Response did not confirm the GB to AT filters')
+    if data.get('residence') != 'GB' or data.get('destination_filter') is not None:
+        raise ValueError('Response did not confirm the UK all-destination query')
     rows = []
     for entry in data.get('slots', []):
-        if entry.get('destination_country_code') != 'AT':
-            continue
         for centre in entry.get('centres', []):
             rows.append({
+                'destination': entry.get('destination_country_code'),
                 'centre': centre.get('centre_name'),
                 'centre_id': centre.get('centre_id'),
                 'category': entry.get('visa_category'),
@@ -39,7 +38,8 @@ def main():
     report = {
         'purpose': 'FEED EVALUATION ONLY. No alerts sent.',
         'source': 'Parse third-party Atlys wrapper; not an official VFS API',
-        'route': 'GB -> AT',
+        'route': 'GB -> all reported destinations',
+        'total_destinations': data.get('total_destinations'),
         'results': rows,
         'limitations': [
             'Empty results do not prove that VFS has no appointments.',
