@@ -17,15 +17,16 @@ concurrency:
 jobs:
   check:
     if: github.event_name == 'workflow_dispatch' || vars.LIVE_ENABLED == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - run: python -m unittest -v
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v6
+        if: inputs.mode == 'live' || github.event_name == 'schedule'
         with:
           path: state
           key: alerts-state-${{ github.run_id }}-${{ github.run_attempt }}
@@ -49,8 +50,8 @@ jobs:
           TWILIO_CONTENT_SID: ${{ secrets.TWILIO_CONTENT_SID }}
           WHATSAPP_TEST_SESSION_OPEN: ${{ vars.WHATSAPP_TEST_SESSION_OPEN }}
         run: python bot.py "$MODE"
-      - uses: actions/cache/save@v4
-        if: always()
+      - uses: actions/cache/save@v6
+        if: always() && hashFiles('state/sent.json') != ''
         with:
           path: state
           key: alerts-state-${{ github.run_id }}-${{ github.run_attempt }}
