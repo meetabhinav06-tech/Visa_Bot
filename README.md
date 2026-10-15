@@ -1,5 +1,24 @@
 # Austria visa appointment alerts
 
+## Live Schengen lead emails
+
+The separate `Schengen live email leads` workflow uses Parse's independent Atlys
+wrapper for UK residents and checks every four hours at minute 23 (UTC). It emails
+new provider-reported actual earliest dates for Schengen tourist visas in London,
+Manchester and Edinburgh before 14 November 2026. Its switch is repository variable
+`LIVE_SCHENGEN_ENABLED=true`; set it to false to stop. It runs one request per check,
+about 180 calls in 30 days, plus any manual runs. Check your current provider quota.
+
+These are unverified leads: upstream freshness is unavailable, detailed date arrays
+may be empty, and reported applicant counts of one do not confirm two-person slots.
+Emails explain these limits. The fixed WhatsApp trial template is not used for live
+leads. The original Austria feed workflow remains disabled. All later setup text
+about that original connector is reference material, not the current live lead flow.
+
+Duplicate suppression uses GitHub cache and may reset after eviction. Ambiguous SMTP
+timeouts or a crash before saving state may cause duplicate emails. GitHub schedules
+can be delayed. No booking, payment or reservation is performed.
+
 Prepared for two tourist / Schengen C applicants travelling on 14 November 2026.
 Targets: London, Manchester and Edinburgh. These are requested filters, not confirmation
 that each centre currently serves this visa category or has appointments.

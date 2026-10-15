@@ -71,9 +71,9 @@ def load_feed():
         raise ValueError('Live feed must explicitly declare simulated=false')
     return feed
 
-def send_email(message):
+def send_email(message, subject='Austria visa alert notification'):
     mail = EmailMessage()
-    mail['Subject'] = 'Austria visa alert notification'
+    mail['Subject'] = subject
     mail['From'] = required('SMTP_USER')
     mail['To'] = required('EMAIL_TO')
     mail.set_content(message)
