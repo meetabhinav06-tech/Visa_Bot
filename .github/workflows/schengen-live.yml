@@ -2,7 +2,7 @@ name: Schengen live email leads
 on:
   workflow_dispatch:
   schedule:
-    - cron: '23 */4 * * *'
+    - cron: '23 */2 * * *'
 permissions:
   contents: read
 concurrency:
@@ -44,3 +44,5 @@ jobs:
         with:
           path: schengen-state
           key: schengen-live-${{ github.run_id }}-${{ github.run_attempt }}
+
+
