@@ -24,13 +24,15 @@ jobs:
           path: schengen-state
           key: schengen-live-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: schengen-live-
-      - name: Fetch live leads and email new results
+      - name: Fetch live leads and notify new results
         env:
           LIVE_SCHENGEN_ENABLED: ${{ vars.LIVE_SCHENGEN_ENABLED }}
           PARSE_API_KEY: ${{ secrets.PARSE_API_KEY }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           WHATSAPP_LIVE_CONTENT_SID: ${{ secrets.WHATSAPP_LIVE_CONTENT_SID }}
           TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
           TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
