@@ -80,7 +80,7 @@ def main():
     lines += ['', 'Source: Parse independent Atlys wrapper, not an official VFS API.',
               'Some results have empty detailed date lists. Source freshness is unverified.',
               'No booking has been made. Missing destinations do not prove no slots exist.',
-              'Check every four hours; unchanged leads are suppressed.']
+              'Check every two hours; unchanged leads are suppressed.']
     def save():
         STATE.parent.mkdir(parents=True, exist_ok=True)
         temp = STATE.with_suffix('.tmp')
@@ -128,3 +128,5 @@ if __name__ == '__main__':
     except Exception as error:
         print('Live lead check failed: ' + type(error).__name__)
         raise SystemExit(1)
+
+
