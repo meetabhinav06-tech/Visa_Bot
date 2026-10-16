@@ -1,4 +1,4 @@
-"""Third-party availability leads, explicitly not confirmed two-person bookings."""
+"""Third-party availability leads for one applicant, not confirmed bookings."""
 from datetime import datetime, timezone, date
 import hashlib
 import json
@@ -8,6 +8,7 @@ from urllib.request import Request, urlopen
 import os
 from bot import send_email, send_whatsapp, required
 from probe_parse import URL
+from telegram_alert import notify_leads
 
 COUNTRIES = {'AT':'Austria','BE':'Belgium','BG':'Bulgaria','HR':'Croatia',
  'CZ':'Czechia','DK':'Denmark','EE':'Estonia','FI':'Finland','FR':'France',
@@ -79,8 +80,7 @@ def main():
     lines += ['', 'Source: Parse independent Atlys wrapper, not an official VFS API.',
               'Some results have empty detailed date lists. Source freshness is unverified.',
               'No booking has been made. Missing destinations do not prove no slots exist.',
-              'Check every four hours; unchanged leads are suppressed.',
-              'WhatsApp live messages are disabled until a suitable template is configured.']
+              'Check every four hours; unchanged leads are suppressed.']
     def save():
         STATE.parent.mkdir(parents=True, exist_ok=True)
         temp = STATE.with_suffix('.tmp')
@@ -94,6 +94,7 @@ def main():
         print('Live lead email accepted by SMTP. Final delivery not confirmed.')
     else:
         print('No new email leads.')
+    notify_leads(rows, state, checked, save)
     template = os.environ.get('WHATSAPP_LIVE_CONTENT_SID', '').strip()
     if not template:
         print('WhatsApp pending: approved dynamic alert template required.')

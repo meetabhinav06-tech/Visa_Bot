@@ -19,3 +19,11 @@ class LeadTests(unittest.TestCase):
     def test_wrong_route_fails(self):
         with self.assertRaises(ValueError):
             leads({'residence':'IN','slots':[]})
+
+    def test_two_or_unknown_applicant_counts_excluded(self):
+        for count in [2, None, '1', True]:
+            data = {'residence':'GB', 'slots':[{'destination_country_code':'FI',
+                    'visa_category':'TOURIST', 'applicant_count':count,
+                    'centres':[{'centre_id':'london','slot_type':'actual',
+                                'earliest_date':'23-10-2026'}]}]}
+            self.assertEqual(leads(data,date(2026,10,16)),[])
