@@ -1,6 +1,6 @@
-# Schengen visa availability alerts
+# Austria visa availability alerts
 
-The deployed `Schengen live email leads` workflow checks every four hours at minute 23 UTC. It queries Parse's independent Atlys wrapper for UK residents and filters provider-reported actual earliest dates for exactly one applicant, tourist visas, London / Manchester / Edinburgh, before 14 November 2026. Only destinations returned by the provider are covered; missing countries do not prove no appointments exist.
+The deployed `Schengen live email leads` workflow checks every four hours at minute 23 UTC. It queries Parse's independent Atlys wrapper for UK residents and filters provider-reported actual earliest dates for Austria only, exactly one applicant, tourist visas, London / Manchester / Edinburgh, before 14 November 2026. Only destinations returned by the provider are covered; missing countries do not prove no appointments exist.
 
 These are third-party leads, not confirmed appointments. Source freshness is unavailable, detailed date lists may be empty, and reported capacity must be verified on the official booking portal. No booking or payment is performed. GitHub schedules may be delayed.
 

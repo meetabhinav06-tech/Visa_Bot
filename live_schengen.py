@@ -28,7 +28,7 @@ def leads(data, today=None):
     rows = []
     for entry in data['slots']:
         code = entry.get('destination_country_code')
-        if code not in COUNTRIES or entry.get('visa_category') != 'TOURIST':
+        if code != 'AT' or entry.get('visa_category') != 'TOURIST':
             continue
         count = entry.get('applicant_count')
         if type(count) is not int or count != 1:
@@ -69,10 +69,10 @@ def main():
             fresh.append(row)
     print(json.dumps({'matching_leads':len(rows), 'new_leads':len(fresh), 'results':rows}, indent=2))
     checked = datetime.now(timezone.utc).isoformat()
-    lines = ['LIVE THIRD-PARTY SCHENGEN AVAILABILITY LEADS',
+    lines = ['LIVE THIRD-PARTY AUSTRIA AVAILABILITY LEADS',
              'Queried at ' + checked + ' (request time, not source observation time).',
              '', 'These are provider-reported earliest dates, not confirmed appointments.',
-             'Filter: 1 applicant, tourist visa, London / Manchester / Edinburgh.',
+             'Filter: Austria only, 1 applicant, tourist visa, London / Manchester / Edinburgh.',
              'Verify dates, category and capacity on the official booking portal.', '',
              'Country | UK centre | Earliest date | Reported applicants']
     for row in fresh:
@@ -87,7 +87,7 @@ def main():
         temp.write_text(json.dumps(state, indent=2))
         temp.replace(STATE)
     if fresh:
-        send_email('\n'.join(lines), subject='Schengen live feed: 1 applicant - dates to verify')
+        send_email('\n'.join(lines), subject='Austria live feed: 1 applicant - dates to verify')
         for key in keys:
             state[key] = checked
         save()
