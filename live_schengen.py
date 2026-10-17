@@ -8,7 +8,7 @@ from urllib.request import Request, urlopen
 import os
 from bot import send_email, send_whatsapp, required
 from probe_parse import URL
-from telegram_alert import notify_leads
+from telegram_alert import notify_leads, send_telegram
 
 COUNTRIES = {'AT':'Austria','BE':'Belgium','BG':'Bulgaria','HR':'Croatia',
  'CZ':'Czechia','DK':'Denmark','EE':'Estonia','FI':'Finland','FR':'France',
@@ -18,6 +18,25 @@ COUNTRIES = {'AT':'Austria','BE':'Belgium','BG':'Bulgaria','HR':'Croatia',
  'RO':'Romania','SK':'Slovakia','SI':'Slovenia','ES':'Spain','SE':'Sweden',
  'CH':'Switzerland'}
 STATE = Path('schengen-state/sent.json')
+
+def send_check_status(rows, fresh, checked):
+    outcome = ('No matching Austria leads returned by the feed.' if not rows else
+               f'{len(rows)} matching Austria leads; {len(fresh)} new leads.')
+    message = ('Austria visa bot: check completed\n' + outcome + '\nChecked: ' + checked
+               + '\n1 applicant; tourist visa; London / Manchester / Edinburgh; before 14 November 2026.'
+               + '\nThird-party feed only: this does not confirm official slot availability or absence.'
+               + '\nScheduled every two hours; GitHub may delay runs.')
+    failures = []
+    for channel, send in [('email', lambda: send_email(message, subject='Austria visa bot: check status')),
+                          ('Telegram', lambda: send_telegram(message))]:
+        try:
+            send()
+            print(channel + ' status accepted by provider.')
+        except Exception:
+            failures.append(channel)
+            print(channel + ' status failed; check provider configuration.')
+    if failures:
+        raise RuntimeError('Status notification failed')
 
 def leads(data, today=None):
     today = today or datetime.now(timezone.utc).date()
@@ -69,6 +88,7 @@ def main():
             fresh.append(row)
     print(json.dumps({'matching_leads':len(rows), 'new_leads':len(fresh), 'results':rows}, indent=2))
     checked = datetime.now(timezone.utc).isoformat()
+    send_check_status(rows, fresh, checked)
     lines = ['LIVE THIRD-PARTY AUSTRIA AVAILABILITY LEADS',
              'Queried at ' + checked + ' (request time, not source observation time).',
              '', 'These are provider-reported earliest dates, not confirmed appointments.',
