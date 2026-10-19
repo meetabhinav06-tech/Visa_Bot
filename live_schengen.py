@@ -21,20 +21,27 @@ COUNTRIES = {'AT':'Austria','BE':'Belgium','BG':'Bulgaria','HR':'Croatia',
 STATE = Path('schengen-state/sent.json')
 
 def send_check_status(rows, fresh, checked):
-    outcome = ('No matching Austria leads returned by the feed.' if not rows else
-               f'{len(rows)} matching Austria leads; {len(fresh)} new leads.')
-    message = ('Austria visa bot: check completed\n' + outcome + '\nChecked: ' + checked
-               + '\n1 applicant; tourist visa; London / Manchester / Edinburgh; before 14 November 2026.'
-               + '\nThird-party feed only: this does not confirm official slot availability or absence.'
-               + '\nScheduled every two hours; GitHub may delay runs.')
-    if rows:
-        message += '\n\nProvider-reported locations and dates:\n' + '\n'.join(
-            row['centre'] + ' | ' + row['date'] for row in rows)
-    else:
-        message += '\nAvailable location/date: none returned for the selected filters.'
-    formatted = escape(message)
-    for when in {row['date'] for row in rows}:
-        formatted = formatted.replace(escape(when), '<b>' + escape(when) + '</b>')
+    from zoneinfo import ZoneInfo
+    uk_checked = datetime.fromisoformat(checked).astimezone(ZoneInfo('Europe/London')).strftime('%d %B %Y, %H:%M UK time')
+    heading = 'AUSTRIA: AVAILABILITY LEAD FOUND' if rows else 'AUSTRIA: NO MATCHING LEADS FOUND'
+    blocks = [heading]
+    for row in rows:
+        readable = date.fromisoformat(row['date']).strftime('%d %B %Y')
+        blocks.append('Location: ' + row['centre'] + '\nAppointment date: ' + readable)
+    if not rows:
+        blocks.append('Location / date: none returned by the feed.')
+    blocks += ['Applicants: 1 | Visa: Tourist',
+               'Centres checked: London, Manchester, Edinburgh',
+               'Appointment date filter: before 14 November 2026',
+               'New leads this check: ' + str(len(fresh)),
+               'Last checked: ' + uk_checked,
+               'Checks scheduled every 2 hours; GitHub may delay runs.',
+               'VERIFY BEFORE BOOKING: Third-party reported information. Availability and capacity are not confirmed by the official booking portal. No booking made.']
+    message = '\n\n'.join(blocks)
+    formatted = escape(message).replace(escape(heading), '<b>' + escape(heading) + '</b>')
+    for row in rows:
+        block = 'Location: ' + row['centre'] + '\nAppointment date: ' + date.fromisoformat(row['date']).strftime('%d %B %Y')
+        formatted = formatted.replace(escape(block), '<b>' + escape(block) + '</b>')
     failures = []
     for channel, send in [('email', lambda: send_email(message, subject='Austria visa bot: check status',
                                                      html=formatted.replace('\n', '<br>'))),

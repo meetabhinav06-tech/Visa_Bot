@@ -34,13 +34,15 @@ def notify_leads(rows, state, checked, save):
         key = 'telegram-one:' + hashlib.sha256(json.dumps(row, sort_keys=True).encode()).hexdigest()
         if key in state:
             continue
-        message = ('Schengen visa availability lead\n'
-                   + row['country'] + ' | ' + row['centre'] + ' | ' + row['date']
-                   + '\n1 applicant, tourist visa.\n'
-                   'Third-party reported date; verify availability and capacity on the official booking portal. '
-                   'Source freshness is unverified. No booking made.\nChecked: ' + checked)
-        formatted = escape(message).replace(escape(row['date']), '<b>' + escape(row['date']) + '</b>')
-        send_telegram(formatted, html=True)
+        from datetime import date
+        when = date.fromisoformat(row['date']).strftime('%d %B %Y')
+        message = ('<b>AUSTRIA: NEW AVAILABILITY LEAD</b>\n\n'
+                   '<b>Location: ' + escape(row['centre']) + '\nAppointment date: ' + escape(when) + '</b>\n\n'
+                   'Applicants: 1 | Visa: Tourist\n\n'
+                   'Please verify availability and capacity on the official booking portal before booking. '
+                   'This is third-party information; freshness is unverified. No booking made.\n\n'
+                   'Checked (UTC): ' + escape(checked))
+        send_telegram(message, html=True)
         state[key] = checked
         save()
     print('Telegram check complete; accepted messages are saved to prevent repeats.')
