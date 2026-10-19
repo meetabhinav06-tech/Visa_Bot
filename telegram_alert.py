@@ -1,10 +1,11 @@
 """Private Telegram notifications; credentials come only from environment secrets."""
 import json
 import os
+from html import escape
 from urllib.request import Request, urlopen
 
 
-def send_telegram(message):
+def send_telegram(message, html=False):
     token = os.environ.get('TELEGRAM_BOT_TOKEN', '').strip()
     chat = os.environ.get('TELEGRAM_CHAT_ID', '').strip()
     if not token or not chat:
@@ -12,8 +13,11 @@ def send_telegram(message):
     # Short plain-text messages avoid formatting injection and Telegram size limits.
     if len(message) > 4000:
         raise ValueError('Telegram message too long')
+    payload = {'chat_id': chat, 'text': message}
+    if html:
+        payload['parse_mode'] = 'HTML'
     request = Request('https://api.telegram.org/bot' + token + '/sendMessage',
-                      data=json.dumps({'chat_id': chat, 'text': message}).encode(),
+                      data=json.dumps(payload).encode(),
                       headers={'Content-Type': 'application/json'}, method='POST')
     with urlopen(request, timeout=30) as response:
         result = json.load(response)
@@ -35,7 +39,8 @@ def notify_leads(rows, state, checked, save):
                    + '\n1 applicant, tourist visa.\n'
                    'Third-party reported date; verify availability and capacity on the official booking portal. '
                    'Source freshness is unverified. No booking made.\nChecked: ' + checked)
-        send_telegram(message)
+        formatted = escape(message).replace(escape(row['date']), '<b>' + escape(row['date']) + '</b>')
+        send_telegram(formatted, html=True)
         state[key] = checked
         save()
     print('Telegram check complete; accepted messages are saved to prevent repeats.')

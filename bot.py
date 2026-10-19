@@ -71,12 +71,14 @@ def load_feed():
         raise ValueError('Live feed must explicitly declare simulated=false')
     return feed
 
-def send_email(message, subject='Austria visa alert notification'):
+def send_email(message, subject='Austria visa alert notification', html=None):
     mail = EmailMessage()
     mail['Subject'] = subject
     mail['From'] = required('SMTP_USER')
     mail['To'] = required('EMAIL_TO')
     mail.set_content(message)
+    if html is not None:
+        mail.add_alternative(html, subtype='html')
     with smtplib.SMTP_SSL(os.environ.get('SMTP_HOST', 'smtp.gmail.com'),
                           int(os.environ.get('SMTP_PORT', '465')), timeout=30,
                           context=ssl.create_default_context()) as smtp:

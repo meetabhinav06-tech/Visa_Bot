@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 import os
+from html import escape
 from bot import send_email, send_whatsapp, required
 from probe_parse import URL
 from telegram_alert import notify_leads, send_telegram
@@ -26,9 +27,18 @@ def send_check_status(rows, fresh, checked):
                + '\n1 applicant; tourist visa; London / Manchester / Edinburgh; before 14 November 2026.'
                + '\nThird-party feed only: this does not confirm official slot availability or absence.'
                + '\nScheduled every two hours; GitHub may delay runs.')
+    if rows:
+        message += '\n\nProvider-reported locations and dates:\n' + '\n'.join(
+            row['centre'] + ' | ' + row['date'] for row in rows)
+    else:
+        message += '\nAvailable location/date: none returned for the selected filters.'
+    formatted = escape(message)
+    for when in {row['date'] for row in rows}:
+        formatted = formatted.replace(escape(when), '<b>' + escape(when) + '</b>')
     failures = []
-    for channel, send in [('email', lambda: send_email(message, subject='Austria visa bot: check status')),
-                          ('Telegram', lambda: send_telegram(message))]:
+    for channel, send in [('email', lambda: send_email(message, subject='Austria visa bot: check status',
+                                                     html=formatted.replace('\n', '<br>'))),
+                          ('Telegram', lambda: send_telegram(formatted, html=True))]:
         try:
             send()
             print(channel + ' status accepted by provider.')
@@ -107,7 +117,12 @@ def main():
         temp.write_text(json.dumps(state, indent=2))
         temp.replace(STATE)
     if fresh:
-        send_email('\n'.join(lines), subject='Austria live feed: 1 applicant - dates to verify')
+        body = '\n'.join(lines)
+        formatted = escape(body)
+        for when in {row['date'] for row in fresh}:
+            formatted = formatted.replace(escape(when), '<b>' + escape(when) + '</b>')
+        send_email(body, subject='Austria live feed: 1 applicant - dates to verify',
+                   html=formatted.replace('\n', '<br>'))
         for key in keys:
             state[key] = checked
         save()
